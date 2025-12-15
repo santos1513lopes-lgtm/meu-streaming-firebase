@@ -10,36 +10,35 @@
         body {
             background-color: #121212; color: white;
             font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;
-            padding-bottom: 80px; /* Espaço para não cortar o final */
+            padding-bottom: 80px;
         }
         
         .container { max-width: 800px; margin: 0 auto; position: relative; padding: 20px; }
 
-        /* --- CABEÇALHO FIXO (STICKY) --- */
+        /* --- CABEÇALHO FIXO --- */
         .sticky-header {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background-color: #121212; /* Fundo sólido para tapar o que passa por trás */
-            padding-top: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #333;
-            margin-bottom: 20px;
+            position: sticky; top: 0; z-index: 1000;
+            background-color: #121212; padding-top: 15px; padding-bottom: 15px;
+            border-bottom: 1px solid #333; margin-bottom: 20px;
         }
 
         h1 { text-align: center; color: #1ed760; margin: 0 0 15px 0; font-size: 1.8em; }
 
         .botoes-topo {
-            display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px;
+            display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;
         }
         .btn-acao {
             background-color: #333; color: white; padding: 8px 15px;
             text-decoration: none; border-radius: 20px; font-size: 0.9em; border: 1px solid #555;
-            transition: 0.2s;
+            transition: 0.2s; cursor: pointer; display: inline-block;
         }
         .btn-acao:hover { background-color: #555; transform: scale(1.05); }
+        
         .btn-sair { background-color: #3f1010; border-color: #5c1818; }
         .btn-sair:hover { background-color: #5c1818; }
+
+        /* Botão Loop Ativo */
+        .btn-loop.ativo { background-color: #1ed760; color: black; font-weight: bold; border-color: #1ed760; }
 
         .search-box {
             width: 100%; padding: 12px; font-size: 16px;
@@ -49,50 +48,22 @@
         }
         .search-box:focus { border: 2px solid #1ed760; background-color: #333; }
 
-        /* --- PLAYLIST ACORDEÃO (SANFONA) --- */
+        /* --- PLAYLIST ACORDEÃO --- */
         .secao-playlist {
-            margin-bottom: 15px;
-            border: 1px solid #333;
-            border-radius: 8px;
-            overflow: hidden;
-            background-color: #181818;
+            margin-bottom: 15px; border: 1px solid #333; border-radius: 8px;
+            overflow: hidden; background-color: #181818;
         }
-
         .cabecalho-playlist {
-            background-color: #222;
-            padding: 15px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            user-select: none; /* Não deixa selecionar o texto ao clicar */
-            transition: background 0.2s;
+            background-color: #222; padding: 15px; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            user-select: none; transition: background 0.2s;
         }
         .cabecalho-playlist:hover { background-color: #2a2a2a; }
-
-        .titulo-playlist {
-            color: #fff; margin: 0; font-size: 1.2em; text-transform: uppercase; letter-spacing: 1px;
-        }
-
-        /* Setinha que gira */
-        .seta-icon {
-            transition: transform 0.3s ease;
-            color: #1ed760;
-            font-size: 1.2em;
-        }
-        /* Classe para girar a seta quando aberto */
+        .titulo-playlist { color: #fff; margin: 0; font-size: 1.2em; text-transform: uppercase; letter-spacing: 1px; }
+        .seta-icon { transition: transform 0.3s ease; color: #1ed760; font-size: 1.2em; }
         .aberto .seta-icon { transform: rotate(180deg); }
-
-        /* Container das músicas (Começa fechado ou aberto, controlado via JS) */
-        .lista-musicas {
-            display: none; /* Padrão: Fechado */
-            padding: 10px;
-            background-color: #121212;
-            border-top: 1px solid #333;
-        }
-        /* Quando tiver a classe 'mostrar', ele aparece */
+        .lista-musicas { display: none; padding: 10px; background-color: #121212; border-top: 1px solid #333; }
         .lista-musicas.mostrar { display: block; animation: fadeIn 0.3s; }
-
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         /* --- CARTÃO DE MÚSICA --- */
@@ -103,33 +74,21 @@
         }
         .cartao-musica:hover { background-color: #282828; }
         .cartao-musica.tocando { border-left: 4px solid #1ed760; background-color: #252525; }
-        
         .nome { font-weight: bold; font-size: 1em; color: #e1e1e1; padding-right: 30px; pointer-events: none; margin-bottom: 5px; }
-        
         .form-playlist { margin-top: 8px; display: flex; gap: 5px; }
-        input[list] {
-            background: #333; border: none; color: white; padding: 6px; 
-            border-radius: 4px; flex-grow: 1; cursor: pointer; font-size: 0.9em;
-        }
+        input[list] { background: #333; border: none; color: white; padding: 6px; border-radius: 4px; flex-grow: 1; cursor: pointer; font-size: 0.9em; }
         button { background: #1ed760; color: black; border: none; font-weight: bold; padding: 6px 12px; border-radius: 20px; cursor: pointer; font-size: 0.9em; }
-        
         audio { width: 100%; margin-top: 5px; height: 25px; }
-
         .btn-deletar {
             background: none; border: none; font-size: 1.1em; cursor: pointer;
             position: absolute; top: 10px; right: 10px; opacity: 0.5; transition: 0.3s; color: inherit; z-index: 10;
         }
         .btn-deletar:hover { opacity: 1; transform: scale(1.1); color: #ff5555; }
-
-        /* Botão Voltar ao Topo */
         #btn-topo {
-            position: fixed; bottom: 20px; right: 20px;
-            background-color: #1ed760; color: black; border: none;
-            border-radius: 50%; width: 50px; height: 50px; font-size: 24px;
-            cursor: pointer; display: none; z-index: 2000;
+            position: fixed; bottom: 20px; right: 20px; background-color: #1ed760; color: black; border: none;
+            border-radius: 50%; width: 50px; height: 50px; font-size: 24px; cursor: pointer; display: none; z-index: 2000;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
-        #btn-topo:hover { transform: scale(1.1); background-color: #1db954; }
     </style>
 </head>
 <body>
@@ -137,13 +96,14 @@
     <div class="container">
         <div class="sticky-header">
             <div class="botoes-topo">
+                <button id="btn-loop" class="btn-acao btn-loop" onclick="alternarLoop()">🔁 Loop: OFF</button>
+                
                 <a href="/upload" class="btn-acao">📤 Upload</a>
                 <a href="/logout" class="btn-acao btn-sair">🚪 Sair</a>
             </div>
             
             <h1>🎵 Streaming Premium</h1>
-            
-            <input type="text" id="searchInput" list="lista-playlists" class="search-box" placeholder="🔍 Pesquisar música ou playlist... (Enter para tocar)">
+            <input type="text" id="searchInput" list="lista-playlists" class="search-box" placeholder="🔍 Pesquisar música ou playlist...">
         </div>
 
         <datalist id="lista-playlists">
@@ -153,26 +113,20 @@
         </datalist>
 
         {% for nome_playlist, musicas in playlists.items() %}
-            <div class="secao-playlist" id="playlist-{{ loop.index }}">
-                
+            <div class="secao-playlist">
                 <div class="cabecalho-playlist" onclick="alternarPlaylist(this)">
                     <h2 class="titulo-playlist">{{ nome_playlist }}</h2>
                     <span class="seta-icon">▼</span>
                 </div>
-                
                 <div class="lista-musicas">
                     {% for musica in musicas %}
                     <div class="cartao-musica" data-nome="{{ musica.nome }}" data-playlist="{{ nome_playlist }}">
-                        
                         <span class="nome">{{ musica.nome }}</span>
-
                         <form action="/deletar" method="POST" onsubmit="return confirm('Tem certeza que deseja EXCLUIR essa música?');">
                             <input type="hidden" name="id_musica" value="{{ musica.nome }}">
-                            <button type="submit" class="btn-deletar" title="Excluir Música">🗑️</button>
+                            <button type="submit" class="btn-deletar" title="Excluir">🗑️</button>
                         </form>
-
                         <audio controls src="{{ musica.url }}"></audio>
-                        
                         <form class="form-playlist" action="/atualizar" method="POST">
                             <input type="hidden" name="id_musica" value="{{ musica.id }}">
                             <input type="text" list="lista-playlists" name="nova_playlist" placeholder="Mover..." required>
@@ -192,74 +146,63 @@
         const secoes = document.querySelectorAll('.secao-playlist');
         const todosAudios = document.querySelectorAll('audio');
         const btnTopo = document.getElementById('btn-topo');
+        const btnLoop = document.getElementById('btn-loop');
+        
+        // Variável de controle do Loop
+        let loopAtivo = false;
 
-        // --- 1. Função do Acordeão (Abrir/Fechar) ---
-        function alternarPlaylist(header) {
-            header.classList.toggle('aberto'); // Gira a seta
-            const lista = header.nextElementSibling; // Pega a div de músicas
-            lista.classList.toggle('mostrar'); // Mostra ou esconde
+        // --- Função para ligar/desligar o Loop ---
+        function alternarLoop() {
+            loopAtivo = !loopAtivo;
+            if (loopAtivo) {
+                btnLoop.innerText = "🔁 Loop: ON";
+                btnLoop.classList.add('ativo');
+            } else {
+                btnLoop.innerText = "🔁 Loop: OFF";
+                btnLoop.classList.remove('ativo');
+            }
         }
 
-        // --- 2. Pesquisa Inteligente (Abre playlists automaticamente) ---
+        function alternarPlaylist(header) {
+            header.classList.toggle('aberto');
+            const lista = header.nextElementSibling;
+            lista.classList.toggle('mostrar');
+        }
+
         function filtrarMusicas() {
             const termo = searchInput.value.toLowerCase();
-            
             secoes.forEach(secao => {
                 let temMusicaVisivel = false;
                 const musicasNaSecao = secao.querySelectorAll('.cartao-musica');
                 const header = secao.querySelector('.cabecalho-playlist');
                 const lista = secao.querySelector('.lista-musicas');
-                
-                // Verifica também o nome da Playlist
                 const nomeDaPlaylist = secao.querySelector('.titulo-playlist').innerText.toLowerCase();
                 const playlistCombina = nomeDaPlaylist.includes(termo);
 
                 musicasNaSecao.forEach(cartao => {
                     const nomeMusica = cartao.getAttribute('data-nome').toLowerCase();
                     const nomePlaylistTag = cartao.getAttribute('data-playlist').toLowerCase();
-                    
-                    // Se o termo bater com a música OU com a playlist
                     if (nomeMusica.includes(termo) || nomePlaylistTag.includes(termo) || playlistCombina) {
-                        cartao.style.display = 'flex';
-                        cartao.classList.add('visivel-na-busca');
-                        temMusicaVisivel = true;
+                        cartao.style.display = 'flex'; cartao.classList.add('visivel-na-busca'); temMusicaVisivel = true;
                     } else {
-                        cartao.style.display = 'none';
-                        cartao.classList.remove('visivel-na-busca');
+                        cartao.style.display = 'none'; cartao.classList.remove('visivel-na-busca');
                     }
                 });
 
                 if (temMusicaVisivel) {
                     secao.style.display = 'block';
-                    // Se tiver pesquisando, ABRE A LISTA automaticamente para ver o resultado
-                    if (termo.length > 0) {
-                        lista.classList.add('mostrar');
-                        header.classList.add('aberto');
-                    }
-                } else {
-                    secao.style.display = 'none';
-                }
+                    if (termo.length > 0) { lista.classList.add('mostrar'); header.classList.add('aberto'); }
+                } else { secao.style.display = 'none'; }
                 
-                // Se limpar a pesquisa, fecha tudo para ficar organizado
-                if (termo.length === 0) {
-                    lista.classList.remove('mostrar');
-                    header.classList.remove('aberto');
-                    secao.style.display = 'block'; // Mostra todas as playlists fechadas
-                }
+                if (termo.length === 0) { lista.classList.remove('mostrar'); header.classList.remove('aberto'); secao.style.display = 'block'; }
             });
         }
         searchInput.addEventListener('input', filtrarMusicas);
 
-        // --- 3. Botão Voltar ao Topo ---
         window.onscroll = function() {
-            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-                btnTopo.style.display = "block";
-            } else {
-                btnTopo.style.display = "none";
-            }
+            btnTopo.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
         };
 
-        // --- 4. Comportamento do Enter e Click (Mantido) ---
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -281,7 +224,7 @@
             });
         });
 
-        // --- 5. Áudio em Segundo Plano (Media Session) ---
+        // --- SISTEMA DE ÁUDIO COM LOOP ---
         todosAudios.forEach(audio => {
             audio.addEventListener('play', function() {
                 todosAudios.forEach(outro => { if (outro !== audio) { outro.pause(); outro.closest('.cartao-musica').classList.remove('tocando'); } });
@@ -308,9 +251,26 @@
                 }
             });
 
+            // Lógica do LOOP no final da música
             audio.addEventListener('ended', function() {
-                let proximo = this.closest('.cartao-musica').nextElementSibling;
-                if (proximo && proximo.classList.contains('cartao-musica')) { let audioProx = proximo.querySelector('audio'); if(audioProx) audioProx.play(); }
+                let cartaoAtual = this.closest('.cartao-musica');
+                let proximo = cartaoAtual.nextElementSibling;
+                
+                // Cenário 1: Tem próxima música? Toca ela.
+                if (proximo && proximo.classList.contains('cartao-musica')) {
+                    let audioProx = proximo.querySelector('audio');
+                    if (audioProx) audioProx.play();
+                } 
+                // Cenário 2: Acabou a lista E o Loop está ativado? Volta pro início.
+                else if (loopAtivo) {
+                    // Sobe até a lista pai e pega a primeira música
+                    let playlistContainer = cartaoAtual.closest('.lista-musicas');
+                    let primeiraMusica = playlistContainer.querySelector('.cartao-musica');
+                    if(primeiraMusica) {
+                        let audioPrimeira = primeiraMusica.querySelector('audio');
+                        if(audioPrimeira) audioPrimeira.play();
+                    }
+                }
             });
         });
     </script>
