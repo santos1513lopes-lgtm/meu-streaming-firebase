@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload - Meu Streaming</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231ed760'%3E%3Cpath d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z'/%3E%3C/svg%3E">
+
+    <style>
+        body {
+            background-color: #121212;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #181818;
+            padding: 30px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid #333;
+        }
+        h1 { color: #1ed760; margin-bottom: 20px; }
+        
+        input, select {
+            width: 90%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background-color: #333;
+            border: none;
+            color: white;
+            border-radius: 5px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1ed760;
+            color: black;
+            font-weight: bold;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background-color: #1db954; }
+        
+        .voltar {
+            display: block;
+            margin-top: 15px;
+            color: #b3b3b3;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📤 Enviar Música</h1>
+        
+        <form action="/upload" method="POST" enctype="multipart/form-data">
+            <label style="display:block; text-align:left; margin-bottom:5px;">Arquivo MP3:</label>
+            <input type="file" name="arquivo" accept=".mp3" required>
+            
+            <label style="display:block; text-align:left; margin-bottom:5px;">Nome da Playlist:</label>
+            <input type="text" name="playlist" placeholder="Ex: Forró, Sertanejo..." required>
+            
+            <button type="submit">🚀 Enviar para o Site</button>
+        </form>
+
+        <a href="/" class="voltar">← Voltar para o Streaming</a>
+    </div>
+
+</body>
+</html>

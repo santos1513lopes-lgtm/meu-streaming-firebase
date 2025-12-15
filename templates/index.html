@@ -14,10 +14,18 @@
             padding: 20px;
             padding-bottom: 80px;
         }
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; position: relative; }
         h1 { text-align: center; color: #1ed760; margin-bottom: 20px; }
 
-        /* Estilo da Lupa */
+        /* Botão de Upload no Topo */
+        .btn-upload {
+            position: absolute; top: 0; right: 0;
+            background-color: #333; color: white; padding: 8px 15px;
+            text-decoration: none; border-radius: 20px; font-size: 0.9em;
+            border: 1px solid #555;
+        }
+        .btn-upload:hover { background-color: #555; }
+
         .search-box {
             width: 100%; padding: 15px; font-size: 16px;
             border-radius: 30px; border: none; margin-bottom: 30px;
@@ -25,7 +33,6 @@
         }
         .search-box:focus { border: 2px solid #1ed760; background-color: #444; }
 
-        /* Títulos das Playlists */
         .titulo-playlist {
             color: #fff; border-bottom: 1px solid #333;
             padding-bottom: 5px; margin-top: 40px;
@@ -37,11 +44,7 @@
             border-radius: 6px; display: flex; flex-direction: column;
             transition: background 0.2s;
         }
-        /* Destaque quando a música está tocando (será ativado pelo Javascript) */
-        .cartao-musica.tocando {
-            border-left: 4px solid #1ed760;
-            background-color: #2a2a2a;
-        }
+        .cartao-musica.tocando { border-left: 4px solid #1ed760; background-color: #2a2a2a; }
 
         .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; }
         
@@ -54,6 +57,8 @@
 <body>
 
     <div class="container">
+        <a href="/upload" class="btn-upload">📤 Upload</a>
+
         <h1>🎵 Streaming Premium</h1>
         
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar música...">
@@ -77,7 +82,6 @@
     </div>
 
     <script>
-        // --- 1. Lupa de Pesquisa ---
         const searchInput = document.getElementById('searchInput');
         const cartoes = document.querySelectorAll('.cartao-musica');
         searchInput.addEventListener('input', function(e) {
@@ -88,11 +92,8 @@
             });
         });
 
-        // --- 2. Autoplay (Tocar a próxima) ---
         const todosAudios = document.querySelectorAll('audio');
-
         todosAudios.forEach(audio => {
-            // Quando apertar play, pausa os outros
             audio.addEventListener('play', function() {
                 todosAudios.forEach(outro => {
                     if (outro !== audio) {
@@ -100,24 +101,14 @@
                         outro.closest('.cartao-musica').classList.remove('tocando');
                     }
                 });
-                // Adiciona efeito visual no que está tocando
                 this.closest('.cartao-musica').classList.add('tocando');
             });
-
-            // Quando a música acabar...
             audio.addEventListener('ended', function() {
-                // Descobre quem é o pai (o cartão atual)
                 let cartaoAtual = this.closest('.cartao-musica');
-                // Descobre quem é o vizinho de baixo (próximo cartão)
                 let proximoCartao = cartaoAtual.nextElementSibling;
-
-                // Se existir um vizinho e ele for um cartão de música...
                 if (proximoCartao && proximoCartao.classList.contains('cartao-musica')) {
-                    // Busca o áudio dentro dele e dá play
                     let proximoAudio = proximoCartao.querySelector('audio');
-                    if (proximoAudio) {
-                        proximoAudio.play();
-                    }
+                    if (proximoAudio) proximoAudio.play();
                 }
             });
         });
