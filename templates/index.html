@@ -3,88 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Streaming Pessoal</title>
-    
+    <title>Meu Streaming Pro</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231ed760'%3E%3Cpath d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z'/%3E%3C/svg%3E">
 
     <style>
-        /* ... (seu estilo css continua igual aqui para baixo) ... */
         body {
             background-color: #121212;
             color: white;
             font-family: 'Segoe UI', sans-serif;
             padding: 20px;
+            padding-bottom: 80px;
         }
-        h1 { text-align: center; color: #1ed760; }
-        .container { max-width: 600px; margin: 0 auto; }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 { text-align: center; color: #1ed760; margin-bottom: 20px; }
+
+        /* Estilo da Lupa */
+        .search-box {
+            width: 100%; padding: 15px; font-size: 16px;
+            border-radius: 30px; border: none; margin-bottom: 30px;
+            background-color: #333; color: white; text-align: center; outline: none;
+        }
+        .search-box:focus { border: 2px solid #1ed760; background-color: #444; }
+
+        /* Títulos das Playlists */
+        .titulo-playlist {
+            color: #fff; border-bottom: 1px solid #333;
+            padding-bottom: 5px; margin-top: 40px;
+            font-size: 1.5em; text-transform: uppercase; letter-spacing: 2px;
+        }
 
         .cartao-musica {
-            background-color: #282828;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            border-left: 5px solid #1ed760;
+            background-color: #181818; padding: 15px; margin-bottom: 10px;
+            border-radius: 6px; display: flex; flex-direction: column;
         }
-
-        .cabecalho {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .nome { font-weight: bold; font-size: 1.1em; }
-        .badge {
-            background-color: #1ed760;
-            color: black;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 0.8em;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        /* Estilo do formulário de playlist */
-        .form-playlist {
-            margin-top: 10px;
-            display: flex;
-            gap: 5px;
-        }
-        input[type="text"] {
-            background: #333; border: none; color: white;
-            padding: 5px; border-radius: 4px; flex-grow: 1;
-        }
-        button {
-            background: #535353; color: white; border: none;
-            padding: 5px 10px; border-radius: 4px; cursor: pointer;
-        }
-        button:hover { background: #1ed760; color: black; }
-
-        audio { width: 100%; margin-top: 10px; }
+        .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; }
+        
+        .form-playlist { margin-top: 10px; display: flex; gap: 5px; }
+        input[type="text"] { background: #333; border: none; color: white; padding: 8px; border-radius: 4px; flex-grow: 1; }
+        button { background: #1ed760; color: black; border: none; font-weight: bold; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        audio { width: 100%; margin-top: 10px; height: 30px; }
     </style>
 </head>
 <body>
 
-    <h1>🎵 Gerenciador de Playlists</h1>
-
     <div class="container">
-        {% for musica in musicas %}
-        <div class="cartao-musica">
-            <div class="cabecalho">
-                <span class="nome">{{ musica.nome }}</span>
-                <span class="badge">{{ musica.playlist }}</span>
-            </div>
-            
-            <audio controls src="{{ musica.url }}"></audio>
+        <h1>🎵 Streaming Premium</h1>
+        
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar música...">
 
-            <form class="form-playlist" action="/atualizar" method="POST">
-                <input type="hidden" name="id_musica" value="{{ musica.id }}">
-                <input type="text" name="nova_playlist" placeholder="Nova playlist (ex: Forró, Treino)..." required>
-                <button type="submit">Mudar</button>
-            </form>
-        </div>
+        {% for nome_playlist, musicas in playlists.items() %}
+            <div class="secao-playlist">
+                <h2 class="titulo-playlist">{{ nome_playlist }}</h2>
+                {% for musica in musicas %}
+                <div class="cartao-musica" data-nome="{{ musica.nome }}">
+                    <span class="nome">{{ musica.nome }}</span>
+                    <audio controls src="{{ musica.url }}"></audio>
+                    <form class="form-playlist" action="/atualizar" method="POST">
+                        <input type="hidden" name="id_musica" value="{{ musica.id }}">
+                        <input type="text" name="nova_playlist" placeholder="Mover para..." required>
+                        <button type="submit">Mover</button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
         {% endfor %}
     </div>
 
+    <script>
+        // Faz a lupa funcionar
+        const searchInput = document.getElementById('searchInput');
+        const cartoes = document.querySelectorAll('.cartao-musica');
+        searchInput.addEventListener('input', function(e) {
+            const termo = e.target.value.toLowerCase();
+            cartoes.forEach(cartao => {
+                const nomeMusica = cartao.getAttribute('data-nome').toLowerCase();
+                cartao.style.display = nomeMusica.includes(termo) ? 'flex' : 'none';
+            });
+        });
+    </script>
 </body>
 </html>
