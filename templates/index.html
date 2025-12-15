@@ -14,6 +14,7 @@
         .container { max-width: 800px; margin: 0 auto; position: relative; }
         h1 { text-align: center; color: #1ed760; margin-bottom: 20px; }
 
+        /* Botão de Upload no topo */
         .btn-upload {
             position: absolute; top: 0; right: 0;
             background-color: #333; color: white; padding: 8px 15px;
@@ -21,6 +22,7 @@
         }
         .btn-upload:hover { background-color: #555; }
 
+        /* Barra de Pesquisa */
         .search-box {
             width: 100%; padding: 15px; font-size: 16px;
             border-radius: 30px; border: none; margin-bottom: 30px;
@@ -28,12 +30,14 @@
         }
         .search-box:focus { border: 2px solid #1ed760; background-color: #444; }
 
+        /* Títulos das Playlists */
         .titulo-playlist {
             color: #fff; border-bottom: 1px solid #333;
             padding-bottom: 5px; margin-top: 40px;
             font-size: 1.5em; text-transform: uppercase; letter-spacing: 2px;
         }
 
+        /* Cartão da Música */
         .cartao-musica {
             background-color: #181818; padding: 15px; margin-bottom: 10px;
             border-radius: 6px; display: flex; flex-direction: column; transition: background 0.2s;
@@ -44,14 +48,18 @@
         
         .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; padding-right: 30px; pointer-events: none; }
         
+        /* Formulário de Mover */
         .form-playlist { margin-top: 10px; display: flex; gap: 5px; }
         input[list] {
             background: #333; border: none; color: white; padding: 8px; 
             border-radius: 4px; flex-grow: 1; cursor: pointer;
         }
         button { background: #1ed760; color: black; border: none; font-weight: bold; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        
+        /* Player de Áudio */
         audio { width: 100%; margin-top: 10px; height: 30px; }
 
+        /* Botão de Deletar (Lixeira) */
         .btn-deletar {
             background: none; border: none; font-size: 1.2em; cursor: pointer;
             position: absolute; top: 10px; right: 10px; opacity: 0.5; transition: 0.3s;
@@ -67,6 +75,7 @@
 
     <div class="container">
         <a href="/upload" class="btn-upload">📤 Upload</a>
+        
         <h1>🎵 Streaming Premium</h1>
         
         <input type="text" id="searchInput" list="lista-playlists" class="search-box" placeholder="🔍 Pesquisar música ou playlist... (Enter para tocar)">
@@ -108,8 +117,9 @@
         const searchInput = document.getElementById('searchInput');
         const cartoes = document.querySelectorAll('.cartao-musica');
         const secoes = document.querySelectorAll('.secao-playlist');
+        const todosAudios = document.querySelectorAll('audio');
 
-        // --- Lógica de Pesquisa Melhorada ---
+        // --- 1. Lógica de Pesquisa (Híbrida: Música + Playlist) ---
         function filtrarMusicas() {
             const termo = searchInput.value.toLowerCase();
             
@@ -121,7 +131,6 @@
                     const nomeMusica = cartao.getAttribute('data-nome').toLowerCase();
                     const nomePlaylist = cartao.getAttribute('data-playlist').toLowerCase();
                     
-                    // AGORA: Verifica se o termo está no NOME ou na PLAYLIST
                     if (nomeMusica.includes(termo) || nomePlaylist.includes(termo)) {
                         cartao.style.display = 'flex';
                         cartao.classList.add('visivel-na-busca');
@@ -132,18 +141,13 @@
                     }
                 });
 
-                // Se não sobrou nenhuma música na playlist, esconde o título também
-                if (temMusicaVisivel) {
-                    secao.style.display = 'block';
-                } else {
-                    secao.style.display = 'none';
-                }
+                // Esconde o título da playlist se não houver músicas visíveis nela
+                secao.style.display = temMusicaVisivel ? 'block' : 'none';
             });
         }
-
         searchInput.addEventListener('input', filtrarMusicas);
 
-        // --- Enter e Click (Mantido igual) ---
+        // --- 2. Enter para Tocar (Acessibilidade) ---
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -155,21 +159,70 @@
             }
         });
 
+        // --- 3. Click no Cartão para Tocar ---
         cartoes.forEach(cartao => {
             cartao.classList.add('visivel-na-busca');
             cartao.addEventListener('click', function(e) {
+                // Evita tocar se clicou nos botões ou inputs
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('form')) return;
+                
                 const audio = this.querySelector('audio');
                 if (audio) { audio.paused ? audio.play() : audio.pause(); }
             });
         });
 
-        const todosAudios = document.querySelectorAll('audio');
+        // --- 4. SISTEMA DE ÁUDIO INTELIGENTE (Media Session API) ---
         todosAudios.forEach(audio => {
+            
+            // Quando der Play...
             audio.addEventListener('play', function() {
-                todosAudios.forEach(outro => { if (outro !== audio) { outro.pause(); outro.closest('.cartao-musica').classList.remove('tocando'); } });
-                this.closest('.cartao-musica').classList.add('tocando');
+                // Pausa os outros
+                todosAudios.forEach(outro => { 
+                    if (outro !== audio) { 
+                        outro.pause(); 
+                        outro.closest('.cartao-musica').classList.remove('tocando'); 
+                    } 
+                });
+                
+                const cartaoAtual = this.closest('.cartao-musica');
+                cartaoAtual.classList.add('tocando');
+
+                // --- CONFIGURAÇÃO DA TELA DE BLOQUEIO / SEGUNDO PLANO ---
+                if ('mediaSession' in navigator) {
+                    const nomeMusica = cartaoAtual.getAttribute('data-nome');
+                    const nomePlaylist = cartaoAtual.getAttribute('data-playlist');
+
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: nomeMusica,
+                        artist: nomePlaylist,
+                        artwork: [
+                            { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231ed760'%3E%3Cpath d='M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z'/%3E%3C/svg%3E", sizes: "96x96", type: "image/svg+xml" }
+                        ]
+                    });
+
+                    // Botões da Tela de Bloqueio
+                    navigator.mediaSession.setActionHandler('play', () => audio.play());
+                    navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+                    
+                    navigator.mediaSession.setActionHandler('previoustrack', () => {
+                        let anterior = cartaoAtual.previousElementSibling;
+                        if (anterior && anterior.classList.contains('cartao-musica')) {
+                            let audioAnt = anterior.querySelector('audio');
+                            if(audioAnt) audioAnt.play();
+                        }
+                    });
+
+                    navigator.mediaSession.setActionHandler('nexttrack', () => {
+                        let proximo = cartaoAtual.nextElementSibling;
+                        if (proximo && proximo.classList.contains('cartao-musica')) {
+                            let audioProx = proximo.querySelector('audio');
+                            if(audioProx) audioProx.play();
+                        }
+                    });
+                }
             });
+
+            // Autoplay (Toca a próxima quando acabar)
             audio.addEventListener('ended', function() {
                 let proximo = this.closest('.cartao-musica').nextElementSibling;
                 if (proximo && proximo.classList.contains('cartao-musica')) {
