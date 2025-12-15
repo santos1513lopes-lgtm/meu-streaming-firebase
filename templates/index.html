@@ -37,20 +37,26 @@
         .cartao-musica {
             background-color: #181818; padding: 15px; margin-bottom: 10px;
             border-radius: 6px; display: flex; flex-direction: column; transition: background 0.2s;
+            position: relative; /* Necessário para posicionar o botão de deletar */
         }
         .cartao-musica.tocando { border-left: 4px solid #1ed760; background-color: #2a2a2a; }
-        .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; }
+        .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; padding-right: 30px; }
         
         .form-playlist { margin-top: 10px; display: flex; gap: 5px; }
-        
-        /* Estilo do Input com Datalist */
         input[list] {
             background: #333; border: none; color: white; padding: 8px; 
             border-radius: 4px; flex-grow: 1; cursor: pointer;
         }
-        
         button { background: #1ed760; color: black; border: none; font-weight: bold; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
         audio { width: 100%; margin-top: 10px; height: 30px; }
+
+        /* Botão de Deletar (Lixeira) */
+        .btn-deletar {
+            background: none; border: none; font-size: 1.2em; cursor: pointer;
+            position: absolute; top: 10px; right: 10px; opacity: 0.5; transition: 0.3s;
+            padding: 0; margin: 0; width: auto; color: inherit;
+        }
+        .btn-deletar:hover { opacity: 1; transform: scale(1.1); }
     </style>
 </head>
 <body>
@@ -72,14 +78,19 @@
                 <h2 class="titulo-playlist">{{ nome_playlist }}</h2>
                 {% for musica in musicas %}
                 <div class="cartao-musica" data-nome="{{ musica.nome }}">
+                    
                     <span class="nome">{{ musica.nome }}</span>
+
+                    <form action="/deletar" method="POST" onsubmit="return confirm('Tem certeza que deseja EXCLUIR essa música para sempre?');">
+                        <input type="hidden" name="id_musica" value="{{ musica.nome }}">
+                        <button type="submit" class="btn-deletar" title="Excluir Música">🗑️</button>
+                    </form>
+
                     <audio controls src="{{ musica.url }}"></audio>
                     
                     <form class="form-playlist" action="/atualizar" method="POST">
                         <input type="hidden" name="id_musica" value="{{ musica.id }}">
-                        
                         <input type="text" list="lista-playlists" name="nova_playlist" placeholder="Mover para..." required>
-                        
                         <button type="submit">Mover</button>
                     </form>
                 </div>

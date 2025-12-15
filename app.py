@@ -19,25 +19,20 @@ if not firebase_admin._apps:
 bucket = storage.bucket()
 db = firestore.client()
 
-# --- FUNÇÃO AJUDANTE PARA PEGAR NOMES DAS PLAYLISTS ---
+# --- FUNÇÃO AUXILIAR ---
 def get_nomes_playlists():
-    # Vai no banco, pega todas as músicas e extrai os nomes únicos das playlists
     docs = db.collection('musicas').stream()
-    nomes = set() # 'set' garante que não haja duplicatas
+    nomes = set()
     for doc in docs:
         dados = doc.to_dict()
         playlist = dados.get('playlist', 'GERAL').upper()
         nomes.add(playlist)
-    
-    # Retorna a lista organizada em ordem alfabética
     return sorted(list(nomes))
 
 @app.route('/')
 def index():
     docs = db.collection('musicas').stream()
     playlists_agrupadas = defaultdict(list)
-    
-    # Conjunto para guardar os nomes das playlists enquanto processamos
     nomes_playlists = set()
 
     for doc in docs:
@@ -46,7 +41,6 @@ def index():
         doc_id = doc.id 
         playlist_nome = dados.get('playlist', 'Geral').upper()
         
-        # Guarda o nome da playlist na lista de opções
         nomes_playlists.add(playlist_nome)
         
         blob = bucket.blob(nome_arquivo)
@@ -60,7 +54,6 @@ def index():
         }
         playlists_agrupadas[playlist_nome].append(musica_obj)
 
-    # Envia as músicas E a lista de nomes para o HTML
     return render_template('index.html', 
                          playlists=dict(playlists_agrupadas),
                          lista_opcoes=sorted(list(nomes_playlists)))
@@ -69,7 +62,6 @@ def index():
 def upload():
     if request.method == 'POST':
         arquivo = request.files['arquivo']
-        # Se o usuário não digitar nada, assume 'GERAL'
         playlist = request.form.get('playlist') or 'GERAL'
         playlist = playlist.upper()
         
@@ -85,7 +77,6 @@ def upload():
             })
             return redirect(url_for('index'))
 
-    # Se for GET, busca as playlists existentes para mostrar na sugestão
     nomes_existentes = get_nomes_playlists()
     return render_template('upload.html', sugestoes=nomes_existentes)
 
@@ -93,9 +84,23 @@ def upload():
 def atualizar_playlist():
     id_musica = request.form['id_musica']
     nova_playlist = request.form['nova_playlist'].upper()
-    
     doc_ref = db.collection('musicas').document(id_musica)
     doc_ref.update({'playlist': nova_playlist})
+    return redirect(url_for('index'))
+
+# --- NOVA ROTA DE EXCLUSÃO ---
+@app.route('/deletar', methods=['POST'])
+def deletar_musica():
+    id_musica = request.form['id_musica'] # O ID é o nome do arquivo
+    
+    # 1. Tenta apagar o arquivo do Storage (Nuvem)
+    try:
+        bucket.blob(id_musica).delete()
+    except:
+        print("Arquivo não encontrado no Storage, apagando apenas do banco.")
+
+    # 2. Apaga o registro do Banco de Dados
+    db.collection('musicas').document(id_musica).delete()
     
     return redirect(url_for('index'))
 
