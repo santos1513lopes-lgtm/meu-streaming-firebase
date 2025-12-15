@@ -8,21 +8,16 @@
 
     <style>
         body {
-            background-color: #121212;
-            color: white;
-            font-family: 'Segoe UI', sans-serif;
-            padding: 20px;
-            padding-bottom: 80px;
+            background-color: #121212; color: white;
+            font-family: 'Segoe UI', sans-serif; padding: 20px; padding-bottom: 80px;
         }
         .container { max-width: 800px; margin: 0 auto; position: relative; }
         h1 { text-align: center; color: #1ed760; margin-bottom: 20px; }
 
-        /* Botão de Upload no Topo */
         .btn-upload {
             position: absolute; top: 0; right: 0;
             background-color: #333; color: white; padding: 8px 15px;
-            text-decoration: none; border-radius: 20px; font-size: 0.9em;
-            border: 1px solid #555;
+            text-decoration: none; border-radius: 20px; font-size: 0.9em; border: 1px solid #555;
         }
         .btn-upload:hover { background-color: #555; }
 
@@ -41,15 +36,19 @@
 
         .cartao-musica {
             background-color: #181818; padding: 15px; margin-bottom: 10px;
-            border-radius: 6px; display: flex; flex-direction: column;
-            transition: background 0.2s;
+            border-radius: 6px; display: flex; flex-direction: column; transition: background 0.2s;
         }
         .cartao-musica.tocando { border-left: 4px solid #1ed760; background-color: #2a2a2a; }
-
         .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; }
         
         .form-playlist { margin-top: 10px; display: flex; gap: 5px; }
-        input[type="text"] { background: #333; border: none; color: white; padding: 8px; border-radius: 4px; flex-grow: 1; }
+        
+        /* Estilo do Input com Datalist */
+        input[list] {
+            background: #333; border: none; color: white; padding: 8px; 
+            border-radius: 4px; flex-grow: 1; cursor: pointer;
+        }
+        
         button { background: #1ed760; color: black; border: none; font-weight: bold; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
         audio { width: 100%; margin-top: 10px; height: 30px; }
     </style>
@@ -58,10 +57,15 @@
 
     <div class="container">
         <a href="/upload" class="btn-upload">📤 Upload</a>
-
         <h1>🎵 Streaming Premium</h1>
         
         <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar música...">
+
+        <datalist id="lista-playlists">
+            {% for opcao in lista_opcoes %}
+                <option value="{{ opcao }}">
+            {% endfor %}
+        </datalist>
 
         {% for nome_playlist, musicas in playlists.items() %}
             <div class="secao-playlist">
@@ -70,9 +74,12 @@
                 <div class="cartao-musica" data-nome="{{ musica.nome }}">
                     <span class="nome">{{ musica.nome }}</span>
                     <audio controls src="{{ musica.url }}"></audio>
+                    
                     <form class="form-playlist" action="/atualizar" method="POST">
                         <input type="hidden" name="id_musica" value="{{ musica.id }}">
-                        <input type="text" name="nova_playlist" placeholder="Mover para..." required>
+                        
+                        <input type="text" list="lista-playlists" name="nova_playlist" placeholder="Mover para..." required>
+                        
                         <button type="submit">Mover</button>
                     </form>
                 </div>
@@ -95,20 +102,14 @@
         const todosAudios = document.querySelectorAll('audio');
         todosAudios.forEach(audio => {
             audio.addEventListener('play', function() {
-                todosAudios.forEach(outro => {
-                    if (outro !== audio) {
-                        outro.pause();
-                        outro.closest('.cartao-musica').classList.remove('tocando');
-                    }
-                });
+                todosAudios.forEach(outro => { if (outro !== audio) { outro.pause(); outro.closest('.cartao-musica').classList.remove('tocando'); } });
                 this.closest('.cartao-musica').classList.add('tocando');
             });
             audio.addEventListener('ended', function() {
-                let cartaoAtual = this.closest('.cartao-musica');
-                let proximoCartao = cartaoAtual.nextElementSibling;
-                if (proximoCartao && proximoCartao.classList.contains('cartao-musica')) {
-                    let proximoAudio = proximoCartao.querySelector('audio');
-                    if (proximoAudio) proximoAudio.play();
+                let proximo = this.closest('.cartao-musica').nextElementSibling;
+                if (proximo && proximo.classList.contains('cartao-musica')) {
+                    let audio = proximo.querySelector('audio');
+                    if (audio) audio.play();
                 }
             });
         });
