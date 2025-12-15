@@ -37,13 +37,11 @@
         .cartao-musica {
             background-color: #181818; padding: 15px; margin-bottom: 10px;
             border-radius: 6px; display: flex; flex-direction: column; transition: background 0.2s;
-            position: relative;
-            cursor: pointer; /* MOSTRA QUE É CLICÁVEL */
+            position: relative; cursor: pointer;
         }
-        /* Efeito quando passa o mouse */
         .cartao-musica:hover { background-color: #252525; }
-        
         .cartao-musica.tocando { border-left: 4px solid #1ed760; background-color: #2a2a2a; }
+        
         .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; padding-right: 30px; pointer-events: none; }
         
         .form-playlist { margin-top: 10px; display: flex; gap: 5px; }
@@ -60,6 +58,9 @@
             padding: 0; margin: 0; width: auto; color: inherit; z-index: 10;
         }
         .btn-deletar:hover { opacity: 1; transform: scale(1.1); color: #ff5555; }
+        
+        /* Ocultar títulos de playlists vazias na busca */
+        .secao-playlist.escondido { display: none; }
     </style>
 </head>
 <body>
@@ -68,7 +69,7 @@
         <a href="/upload" class="btn-upload">📤 Upload</a>
         <h1>🎵 Streaming Premium</h1>
         
-        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar música... (Enter para tocar)">
+        <input type="text" id="searchInput" list="lista-playlists" class="search-box" placeholder="🔍 Pesquisar música ou playlist... (Enter para tocar)">
 
         <datalist id="lista-playlists">
             {% for opcao in lista_opcoes %}
@@ -79,8 +80,9 @@
         {% for nome_playlist, musicas in playlists.items() %}
             <div class="secao-playlist">
                 <h2 class="titulo-playlist">{{ nome_playlist }}</h2>
+                
                 {% for musica in musicas %}
-                <div class="cartao-musica" data-nome="{{ musica.nome }}">
+                <div class="cartao-musica" data-nome="{{ musica.nome }}" data-playlist="{{ nome_playlist }}">
                     
                     <span class="nome">{{ musica.nome }}</span>
 
@@ -105,75 +107,69 @@
     <script>
         const searchInput = document.getElementById('searchInput');
         const cartoes = document.querySelectorAll('.cartao-musica');
+        const secoes = document.querySelectorAll('.secao-playlist');
 
-        // --- 1. Lógica da Pesquisa ---
-        searchInput.addEventListener('input', function(e) {
-            const termo = e.target.value.toLowerCase();
-            cartoes.forEach(cartao => {
-                const nomeMusica = cartao.getAttribute('data-nome').toLowerCase();
-                if (nomeMusica.includes(termo)) {
-                    cartao.style.display = 'flex';
-                    cartao.classList.add('visivel-na-busca'); // Marca que está visível
+        // --- Lógica de Pesquisa Melhorada ---
+        function filtrarMusicas() {
+            const termo = searchInput.value.toLowerCase();
+            
+            secoes.forEach(secao => {
+                let temMusicaVisivel = false;
+                const musicasNaSecao = secao.querySelectorAll('.cartao-musica');
+                
+                musicasNaSecao.forEach(cartao => {
+                    const nomeMusica = cartao.getAttribute('data-nome').toLowerCase();
+                    const nomePlaylist = cartao.getAttribute('data-playlist').toLowerCase();
+                    
+                    // AGORA: Verifica se o termo está no NOME ou na PLAYLIST
+                    if (nomeMusica.includes(termo) || nomePlaylist.includes(termo)) {
+                        cartao.style.display = 'flex';
+                        cartao.classList.add('visivel-na-busca');
+                        temMusicaVisivel = true;
+                    } else {
+                        cartao.style.display = 'none';
+                        cartao.classList.remove('visivel-na-busca');
+                    }
+                });
+
+                // Se não sobrou nenhuma música na playlist, esconde o título também
+                if (temMusicaVisivel) {
+                    secao.style.display = 'block';
                 } else {
-                    cartao.style.display = 'none';
-                    cartao.classList.remove('visivel-na-busca');
+                    secao.style.display = 'none';
                 }
             });
-        });
+        }
 
-        // --- 2. Tocar ao apertar ENTER ---
+        searchInput.addEventListener('input', filtrarMusicas);
+
+        // --- Enter e Click (Mantido igual) ---
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                e.preventDefault(); // Não deixa recarregar a página
-                // Pega a primeira música que estiver visível
+                e.preventDefault();
                 const primeiraVisivel = document.querySelector('.cartao-musica.visivel-na-busca') || document.querySelector('.cartao-musica');
-                
                 if (primeiraVisivel && primeiraVisivel.style.display !== 'none') {
                     const audio = primeiraVisivel.querySelector('audio');
-                    if(audio) {
-                        audio.play();
-                        searchInput.blur(); // Tira o foco do teclado (útil no celular)
-                    }
+                    if(audio) { audio.play(); searchInput.blur(); }
                 }
             }
         });
 
-        // --- 3. Clicar no Cartão para Tocar ---
         cartoes.forEach(cartao => {
-            cartao.classList.add('visivel-na-busca'); // Inicia todas como visíveis
-
+            cartao.classList.add('visivel-na-busca');
             cartao.addEventListener('click', function(e) {
-                // Se clicou no botão de deletar, no input de mover ou no botão de mover, NÃO toca.
-                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('form')) {
-                    return;
-                }
-                
-                // Se clicou no cartão (fundo) ou no nome, toca a música
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('form')) return;
                 const audio = this.querySelector('audio');
-                if (audio) {
-                    // Se já estiver tocando e clicou de novo, pausa. Se não, toca.
-                    if (audio.paused) {
-                        audio.play();
-                    } else {
-                        audio.pause();
-                    }
-                }
+                if (audio) { audio.paused ? audio.play() : audio.pause(); }
             });
         });
 
-        // --- 4. Autoplay e Pausa Automática ---
         const todosAudios = document.querySelectorAll('audio');
         todosAudios.forEach(audio => {
             audio.addEventListener('play', function() {
-                todosAudios.forEach(outro => { 
-                    if (outro !== audio) { 
-                        outro.pause(); 
-                        outro.closest('.cartao-musica').classList.remove('tocando'); 
-                    } 
-                });
+                todosAudios.forEach(outro => { if (outro !== audio) { outro.pause(); outro.closest('.cartao-musica').classList.remove('tocando'); } });
                 this.closest('.cartao-musica').classList.add('tocando');
             });
-
             audio.addEventListener('ended', function() {
                 let proximo = this.closest('.cartao-musica').nextElementSibling;
                 if (proximo && proximo.classList.contains('cartao-musica')) {
