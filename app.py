@@ -136,6 +136,44 @@ def deletar_musica():
         pass
     db.collection('musicas').document(id_musica).delete()
     return redirect(url_for('index'))
+# --- NOVAS ROTAS DE GERENCIAMENTO DE PLAYLIST ---
 
+@app.route('/renomear_playlist', methods=['POST'])
+@login_obrigatorio
+def renomear_playlist():
+    nome_antigo = request.form['nome_antigo']
+    nome_novo = request.form['nome_novo'].upper() # Força maiúsculo para padronizar
+    
+    # 1. Busca todas as músicas daquela playlist
+    docs = db.collection('musicas').where('playlist', '==', nome_antigo).stream()
+    
+    # 2. Atualiza uma por uma
+    for doc in docs:
+        doc.reference.update({'playlist': nome_novo})
+        
+    return redirect(url_for('index'))
+
+@app.route('/deletar_playlist', methods=['POST'])
+@login_obrigatorio
+def deletar_playlist():
+    nome_playlist = request.form['nome_playlist']
+    
+    # 1. Busca todas as músicas
+    docs = db.collection('musicas').where('playlist', '==', nome_playlist).stream()
+    
+    for doc in docs:
+        dados = doc.to_dict()
+        nome_arquivo = dados['nome']
+        
+        # 2. Deleta o arquivo MP3 da Nuvem
+        try:
+            bucket.blob(nome_arquivo).delete()
+        except:
+            print(f"Erro ao deletar arquivo {nome_arquivo} do Storage")
+            
+        # 3. Deleta o registro do Banco de Dados
+        doc.reference.delete()
+        
+    return redirect(url_for('index'))
 if __name__ == '__main__':
     app.run(debug=True)
