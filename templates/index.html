@@ -37,10 +37,14 @@
         .cartao-musica {
             background-color: #181818; padding: 15px; margin-bottom: 10px;
             border-radius: 6px; display: flex; flex-direction: column; transition: background 0.2s;
-            position: relative; /* Necessário para posicionar o botão de deletar */
+            position: relative;
+            cursor: pointer; /* MOSTRA QUE É CLICÁVEL */
         }
+        /* Efeito quando passa o mouse */
+        .cartao-musica:hover { background-color: #252525; }
+        
         .cartao-musica.tocando { border-left: 4px solid #1ed760; background-color: #2a2a2a; }
-        .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; padding-right: 30px; }
+        .nome { font-weight: bold; font-size: 1.1em; color: #e1e1e1; padding-right: 30px; pointer-events: none; }
         
         .form-playlist { margin-top: 10px; display: flex; gap: 5px; }
         input[list] {
@@ -50,13 +54,12 @@
         button { background: #1ed760; color: black; border: none; font-weight: bold; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
         audio { width: 100%; margin-top: 10px; height: 30px; }
 
-        /* Botão de Deletar (Lixeira) */
         .btn-deletar {
             background: none; border: none; font-size: 1.2em; cursor: pointer;
             position: absolute; top: 10px; right: 10px; opacity: 0.5; transition: 0.3s;
-            padding: 0; margin: 0; width: auto; color: inherit;
+            padding: 0; margin: 0; width: auto; color: inherit; z-index: 10;
         }
-        .btn-deletar:hover { opacity: 1; transform: scale(1.1); }
+        .btn-deletar:hover { opacity: 1; transform: scale(1.1); color: #ff5555; }
     </style>
 </head>
 <body>
@@ -65,7 +68,7 @@
         <a href="/upload" class="btn-upload">📤 Upload</a>
         <h1>🎵 Streaming Premium</h1>
         
-        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar música...">
+        <input type="text" id="searchInput" class="search-box" placeholder="🔍 Pesquisar música... (Enter para tocar)">
 
         <datalist id="lista-playlists">
             {% for opcao in lista_opcoes %}
@@ -81,7 +84,7 @@
                     
                     <span class="nome">{{ musica.nome }}</span>
 
-                    <form action="/deletar" method="POST" onsubmit="return confirm('Tem certeza que deseja EXCLUIR essa música para sempre?');">
+                    <form action="/deletar" method="POST" onsubmit="return confirm('Tem certeza que deseja EXCLUIR essa música?');">
                         <input type="hidden" name="id_musica" value="{{ musica.nome }}">
                         <button type="submit" class="btn-deletar" title="Excluir Música">🗑️</button>
                     </form>
@@ -102,25 +105,80 @@
     <script>
         const searchInput = document.getElementById('searchInput');
         const cartoes = document.querySelectorAll('.cartao-musica');
+
+        // --- 1. Lógica da Pesquisa ---
         searchInput.addEventListener('input', function(e) {
             const termo = e.target.value.toLowerCase();
             cartoes.forEach(cartao => {
                 const nomeMusica = cartao.getAttribute('data-nome').toLowerCase();
-                cartao.style.display = nomeMusica.includes(termo) ? 'flex' : 'none';
+                if (nomeMusica.includes(termo)) {
+                    cartao.style.display = 'flex';
+                    cartao.classList.add('visivel-na-busca'); // Marca que está visível
+                } else {
+                    cartao.style.display = 'none';
+                    cartao.classList.remove('visivel-na-busca');
+                }
             });
         });
 
+        // --- 2. Tocar ao apertar ENTER ---
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Não deixa recarregar a página
+                // Pega a primeira música que estiver visível
+                const primeiraVisivel = document.querySelector('.cartao-musica.visivel-na-busca') || document.querySelector('.cartao-musica');
+                
+                if (primeiraVisivel && primeiraVisivel.style.display !== 'none') {
+                    const audio = primeiraVisivel.querySelector('audio');
+                    if(audio) {
+                        audio.play();
+                        searchInput.blur(); // Tira o foco do teclado (útil no celular)
+                    }
+                }
+            }
+        });
+
+        // --- 3. Clicar no Cartão para Tocar ---
+        cartoes.forEach(cartao => {
+            cartao.classList.add('visivel-na-busca'); // Inicia todas como visíveis
+
+            cartao.addEventListener('click', function(e) {
+                // Se clicou no botão de deletar, no input de mover ou no botão de mover, NÃO toca.
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.closest('form')) {
+                    return;
+                }
+                
+                // Se clicou no cartão (fundo) ou no nome, toca a música
+                const audio = this.querySelector('audio');
+                if (audio) {
+                    // Se já estiver tocando e clicou de novo, pausa. Se não, toca.
+                    if (audio.paused) {
+                        audio.play();
+                    } else {
+                        audio.pause();
+                    }
+                }
+            });
+        });
+
+        // --- 4. Autoplay e Pausa Automática ---
         const todosAudios = document.querySelectorAll('audio');
         todosAudios.forEach(audio => {
             audio.addEventListener('play', function() {
-                todosAudios.forEach(outro => { if (outro !== audio) { outro.pause(); outro.closest('.cartao-musica').classList.remove('tocando'); } });
+                todosAudios.forEach(outro => { 
+                    if (outro !== audio) { 
+                        outro.pause(); 
+                        outro.closest('.cartao-musica').classList.remove('tocando'); 
+                    } 
+                });
                 this.closest('.cartao-musica').classList.add('tocando');
             });
+
             audio.addEventListener('ended', function() {
                 let proximo = this.closest('.cartao-musica').nextElementSibling;
                 if (proximo && proximo.classList.contains('cartao-musica')) {
-                    let audio = proximo.querySelector('audio');
-                    if (audio) audio.play();
+                    let audioProx = proximo.querySelector('audio');
+                    if (audioProx) audioProx.play();
                 }
             });
         });
