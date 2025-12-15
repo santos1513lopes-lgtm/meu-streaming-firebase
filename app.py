@@ -1,12 +1,20 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import firebase_admin
 from firebase_admin import credentials, storage, firestore
 import datetime
 from collections import defaultdict
+from functools import wraps
 
 app = Flask(__name__)
 
-# --- CONFIGURAÇÃO ---
+# --- CONFIGURAÇÃO DE SEGURANÇA ---
+app.secret_key = 'uma_chave_secreta_muito_dificil' # Necessário para o login funcionar
+
+# 🔴 DEFINA SEU LOGIN AQUI:
+USUARIO_ADM = "santos1513.lopes@gmail.com"
+SENHA_ADM = "191414"
+
+# --- CONFIGURAÇÃO FIREBASE ---
 nome_do_bucket = 'meustreaming-94cda.firebasestorage.app'
 caminho_chave = 'firebase_key.json'
 
@@ -19,17 +27,39 @@ if not firebase_admin._apps:
 bucket = storage.bucket()
 db = firestore.client()
 
-# --- FUNÇÃO AUXILIAR ---
-def get_nomes_playlists():
-    docs = db.collection('musicas').stream()
-    nomes = set()
-    for doc in docs:
-        dados = doc.to_dict()
-        playlist = dados.get('playlist', 'GERAL').upper()
-        nomes.add(playlist)
-    return sorted(list(nomes))
+# --- BLOQUEADOR (Protege as páginas) ---
+def login_obrigatorio(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'usuario_logado' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
 
+# --- ROTA DE LOGIN ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        senha = request.form['senha']
+        
+        if email == USUARIO_ADM and senha == SENHA_ADM:
+            session['usuario_logado'] = True
+            return redirect(url_for('index'))
+        else:
+            flash('Login ou senha incorretos!')
+            
+    return render_template('login.html')
+
+# --- ROTA DE SAIR ---
+@app.route('/logout')
+def logout():
+    session.pop('usuario_logado', None)
+    return redirect(url_for('login'))
+
+# --- ROTAS DO SITE (Agora Protegidas) ---
 @app.route('/')
+@login_obrigatorio
 def index():
     docs = db.collection('musicas').stream()
     playlists_agrupadas = defaultdict(list)
@@ -59,6 +89,7 @@ def index():
                          lista_opcoes=sorted(list(nomes_playlists)))
 
 @app.route('/upload', methods=['GET', 'POST'])
+@login_obrigatorio
 def upload():
     if request.method == 'POST':
         arquivo = request.files['arquivo']
@@ -77,10 +108,17 @@ def upload():
             })
             return redirect(url_for('index'))
 
-    nomes_existentes = get_nomes_playlists()
-    return render_template('upload.html', sugestoes=nomes_existentes)
+    # Pega nomes para sugestão
+    docs = db.collection('musicas').stream()
+    nomes = set()
+    for doc in docs:
+        dados = doc.to_dict()
+        nomes.add(dados.get('playlist', 'GERAL').upper())
+        
+    return render_template('upload.html', sugestoes=sorted(list(nomes)))
 
 @app.route('/atualizar', methods=['POST'])
+@login_obrigatorio
 def atualizar_playlist():
     id_musica = request.form['id_musica']
     nova_playlist = request.form['nova_playlist'].upper()
@@ -88,20 +126,15 @@ def atualizar_playlist():
     doc_ref.update({'playlist': nova_playlist})
     return redirect(url_for('index'))
 
-# --- NOVA ROTA DE EXCLUSÃO ---
 @app.route('/deletar', methods=['POST'])
+@login_obrigatorio
 def deletar_musica():
-    id_musica = request.form['id_musica'] # O ID é o nome do arquivo
-    
-    # 1. Tenta apagar o arquivo do Storage (Nuvem)
+    id_musica = request.form['id_musica']
     try:
         bucket.blob(id_musica).delete()
     except:
-        print("Arquivo não encontrado no Storage, apagando apenas do banco.")
-
-    # 2. Apaga o registro do Banco de Dados
+        pass
     db.collection('musicas').document(id_musica).delete()
-    
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
